@@ -1,7 +1,7 @@
 pipeline {
   agent any
   stages {
-    stage('deploy start') {
+    stage('Deploy start') {
       steps {
         slackSend(message: "Deploy ${env.BUILD_NUMBER} Started"
         , color: 'good', tokenCredentialId: 'slack-key')
@@ -10,7 +10,7 @@ pipeline {
     stage('git pull') {
       steps {
         // Git-URL will replace by sed command before RUN
-        git url: 'https://github.com/jayhyeonpark/GitOps', branch: 'main'
+        git url: 'Git-URL', branch: 'main'
       }
     }
     stage('k8s deploy'){
@@ -18,10 +18,17 @@ pipeline {
         sh 'kubectl apply -f deployment.yaml'
       }
     }
-    stage('deploy end') {
+    stage('send diff') {
       steps {
+        script {
+          def publisher = LastChanges.getLastChangesPublisher "PREVIOUS_REVISION", "SIDE", "LINE", true, true, "", "", "", "", ""
+          publisher.publishLastChanges()
+          def htmlDiff = publisher.getHtmlDiff()
+          writeFile file: "deploy-diff-${env.BUILD_NUMBER}.html", text: htmlDiff
+        }
         slackSend(message: """${env.JOB_NAME} #${env.BUILD_NUMBER} End
-        """, color: 'good', tokenCredentialId: 'slack-key')
+        (<${env.BUILD_URL}/last-changes|Check Last changed>)"""
+        , color: 'good', tokenCredentialId: 'slack-key')             
       }
     }
   }
