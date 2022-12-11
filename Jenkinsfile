@@ -15,13 +15,13 @@ pipeline {
     }
     stage('k8s deploy'){
       steps {
-        kubernetesDeploy(kubeconfigId: 'kubeconfig',
-                         configs: '*.yaml')
+        sh 'kubectl apply -f deployment.yaml'
       }
     }
     stage('deploy end') {
       steps {
-        sh "pwd"
+        slackSend(message: """${env.JOB_NAME} #${env.BUILD_NUMBER} End
+        """, color: 'good', tokenCredentialId: 'slack-key')
       }
     }
   }
