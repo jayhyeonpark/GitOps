@@ -21,6 +21,7 @@ pipeline {
     }
     stage('deploy end') {
       steps {
+        sh "pwd"
       }
     }
   }
